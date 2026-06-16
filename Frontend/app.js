@@ -127,12 +127,10 @@ async function doLogin() {
             localStorage.setItem("cw_user", u);
             document.getElementById("loginOverlay").style.display = "none";
             // show username in sidebar
-            const u = localStorage.getItem("cw_user") || "Analyst";
             const sidebarUser = document.getElementById("sidebarUser");
             const avatar = document.getElementById("userAvatar");
             if (sidebarUser) sidebarUser.innerText = u;
             if (avatar) avatar.innerText = u.charAt(0).toUpperCase();
-                    
             initDashboard();
         } else {
             msg.innerText = "❌ Invalid username or password";

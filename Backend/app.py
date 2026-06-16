@@ -282,58 +282,69 @@ def scrape():
 @app.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
     try:
+        import datetime, tempfile, re as regex
         data = request.json
+
+        # Strip emojis from any string
+        def clean(text):
+            return regex.sub(r'[^\x00-\x7F]+', '', str(text)).strip()
+
         pdf = FPDF()
         pdf.add_page()
 
         # Title
-        pdf.set_font("Arial", "B", 20)
-        pdf.set_text_color(30, 100, 180)
-        pdf.cell(0, 14, "CyberWatch - Investigation Report", ln=True, align="C")
-        pdf.set_font("Arial", "", 10)
+        pdf.set_font("Helvetica", "B", 20)
+        pdf.set_text_color(100, 60, 200)
+        pdf.cell(0, 14, "CyberWatch - Investigation Report",
+                 new_x="LMARGIN", new_y="NEXT", align="C")
+
+        pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 8, f"Generated: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align="C")
+        pdf.cell(0, 8,
+                 f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                 new_x="LMARGIN", new_y="NEXT", align="C")
         pdf.ln(6)
 
         def section_title(title):
-            pdf.set_font("Arial", "B", 13)
-            pdf.set_text_color(30, 100, 180)
-            pdf.cell(0, 10, title, ln=True)
-            pdf.set_draw_color(30, 100, 180)
+            pdf.set_font("Helvetica", "B", 13)
+            pdf.set_text_color(100, 60, 200)
+            pdf.cell(0, 10, clean(title), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_draw_color(100, 60, 200)
             pdf.line(10, pdf.get_y(), 200, pdf.get_y())
             pdf.ln(3)
 
         def row(label, value):
-            pdf.set_font("Arial", "B", 10)
+            pdf.set_font("Helvetica", "B", 10)
             pdf.set_text_color(60, 60, 60)
-            pdf.cell(55, 8, str(label) + ":", ln=False)
-            pdf.set_font("Arial", "", 10)
+            pdf.cell(55, 8, clean(label) + ":", new_x="RIGHT", new_y="TOP")
+            pdf.set_font("Helvetica", "", 10)
             pdf.set_text_color(20, 20, 20)
-            pdf.cell(0, 8, str(value)[:80], ln=True)
+            pdf.cell(0, 8, clean(value)[:80], new_x="LMARGIN", new_y="NEXT")
 
         # LOG
         log = data.get("logs", {})
         if log:
             section_title("1. Log Analysis")
-            row("Total Entries",   log.get("total", "N/A"))
-            row("Failed / High",   log.get("failed", "N/A"))
-            row("Unique IPs",      log.get("unique_ips", "N/A"))
+            row("Total Entries", log.get("total", "N/A"))
+            row("Failed / High Risk", log.get("failed", "N/A"))
+            row("Unique IPs", log.get("unique_ips", "N/A"))
             susp = log.get("suspicious", [])
-            row("Suspicious IPs",  len(susp))
+            row("Suspicious IPs", len(susp))
             for s in susp[:5]:
-                row("  Brute Force IP", f"{s.get('ip')} - {s.get('attempts')} attempts")
+                row("  Brute Force IP",
+                    f"{s.get('ip')} - {s.get('attempts')} attempts")
             pdf.ln(4)
 
         # SCAN
         scan = data.get("scan", {})
         if scan:
             section_title("2. Network Scan")
-            row("Target IP",    scan.get("ip", "N/A"))
-            row("Open Ports",   scan.get("open", "N/A"))
-            row("Filtered",     scan.get("filtered", "N/A"))
-            ports = scan.get("ports", [])
-            for p in ports[:10]:
-                row(f"  Port {p.get('port')}", f"{p.get('status')} | {p.get('service')} | {p.get('risk')}")
+            row("Target IP", scan.get("ip", "N/A"))
+            row("Open Ports", scan.get("open", "N/A"))
+            row("Filtered Ports", scan.get("filtered", "N/A"))
+            for p in scan.get("ports", [])[:10]:
+                row(f"  Port {p.get('port')}",
+                    f"{p.get('status')} | {p.get('service')} | {clean(p.get('risk',''))}")
             pdf.ln(4)
 
         # THREATS
@@ -341,42 +352,42 @@ def generate_pdf():
         section_title("3. Threat Intelligence")
         row("Malicious IPs Found", len(threats))
         for t in threats[:10]:
-            row("  Malicious IP", f"{t.get('ip')} - {t.get('status')}")
+            row("  Malicious IP",
+                f"{t.get('ip')} - {clean(t.get('status',''))}")
         pdf.ln(4)
 
         # SCRAPE
         scrape = data.get("scrape", {})
         if scrape:
             section_title("4. Web Scraper")
-            row("Title",         scrape.get("title", "N/A"))
-            row("URL",           scrape.get("url", "N/A"))
-            row("Links Found",   len(scrape.get("links", [])))
-            row("Images Found",  len(scrape.get("images", [])))
-            row("Forms Found",   len(scrape.get("forms", [])))
-            row("Phishing Risk", scrape.get("phishing_risk", "N/A"))
+            row("Title", scrape.get("title", "N/A"))
+            row("URL", scrape.get("url", "N/A"))
+            row("Links Found", len(scrape.get("links", [])))
+            row("Images Found", len(scrape.get("images", [])))
+            row("Forms Found", len(scrape.get("forms", [])))
+            row("Phishing Risk", clean(scrape.get("phishing_risk", "N/A")))
             pdf.ln(4)
 
         # Footer
-        pdf.set_font("Arial", "I", 9)
+        pdf.set_font("Helvetica", "I", 9)
         pdf.set_text_color(150, 150, 150)
-        pdf.cell(0, 8, "CyberWatch Investigation Platform - Confidential Report", ln=True, align="C")
+        pdf.cell(0, 8, "CyberWatch Investigation Platform - Confidential Report",
+                 new_x="LMARGIN", new_y="NEXT", align="C")
 
-        # Output as bytes
-        pdf_output = pdf.output(dest='S')
-        if isinstance(pdf_output, str):
-            pdf_bytes = pdf_output.encode('latin-1')
-        else:
-            pdf_bytes = bytes(pdf_output)
+        # Save and send
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp.close()
+        pdf.output(tmp.name)
 
-        buf = io.BytesIO(pdf_bytes)
-        buf.seek(0)
         return send_file(
-            buf,
+            tmp.name,
             mimetype='application/pdf',
             as_attachment=True,
             download_name='CyberWatch_Report.pdf'
         )
+
     except Exception as e:
+        print("PDF ERROR:", str(e))
         return jsonify({"error": str(e)})
 
 # ================= RUN =================
