@@ -3,49 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberWatch — Investigation Platform</title>
+    <title>CyberWatch — SOC Investigation Platform</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
+<!-- ========== MATRIX BACKGROUND ========== -->
+<canvas id="matrixCanvas"></canvas>
+
 <!-- ========== ALERT POPUPS ========== -->
 <div id="alertContainer"></div>
 
 <!-- ========== LOGIN ========== -->
 <div id="loginOverlay">
+
+    <div class="login-hero">
+        <div class="hero-badge">⚡ SECURITY OPERATIONS CENTER</div>
+        <h1>CYBERWATCH</h1>
+        <p>Cyber Crime Investigation Platform</p>
+    </div>
+
     <div class="login-box">
-        <h2>🛡 CyberWatch</h2>
-        <input id="loginUser" type="text" placeholder="Username" autocomplete="off">
-        <input id="loginPass" type="password" placeholder="Password">
+        <h2>🔐 Analyst Authentication</h2>
+
+        <input id="loginUser" type="text"
+            placeholder="Username" autocomplete="off">
+
+        <input id="loginPass" type="password"
+            placeholder="Password">
+
+        <div class="strength-bar-wrap">
+            <div class="strength-bar" id="strengthBar"></div>
+        </div>
+
         <p id="pwdStrength"></p>
         <p id="loginMsg"></p>
-        <div class="btn-row">
-            <button class="btn btn-login" onclick="doLogin()">Login</button>
-            <button class="btn btn-register" onclick="doRegister()">Register</button>
+
+        <div class="login-btn-row">
+            <button class="btn-login"  onclick="doLogin()">🔓 Login</button>
+            <button class="btn-register" onclick="doRegister()">📝 Register</button>
+        </div>
+
+        <div class="audit-toggle">
+            <button onclick="toggleAudit()">
+                🔑 Check password strength before logging in
+            </button>
+        </div>
+
+        <div class="login-audit-box" id="loginAuditBox">
+            <input type="text" id="auditPwdLogin"
+                placeholder="Type any password to audit..."
+                style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.03);
+                border:1px solid var(--border);border-radius:10px;
+                color:white;font-size:13px;outline:none;margin-bottom:10px;"
+                oninput="auditPasswordInline()">
+            <div id="auditInlineResult"
+                style="font-size:12px;color:var(--text-muted);"></div>
         </div>
     </div>
+
 </div>
 
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
     <div class="sidebar-logo">
-        <h2>⚡ CYBERWATCH</h2>
-        <p>INVESTIGATION PLATFORM</p>
+        <div class="logo-icon">🛡</div>
+        <h2>CYBERWATCH</h2>
+        <p>SOC PLATFORM</p>
     </div>
+
     <ul>
-        <li id="nav-dashboard" class="active" onclick="showSection('dashboard')">🏠 Dashboard</li>
-        <li id="nav-log"       onclick="showSection('log')">📄 Log Analysis</li>
-        <li id="nav-scan"      onclick="showSection('scan')">🌐 Network Scan</li>
-        <li id="nav-packet"    onclick="showSection('packet')">📦 Packet Capture</li>
-        <li id="nav-threat"    onclick="showSection('threat')">🛡 Threat Intel</li>
-        <li id="nav-scrape"    onclick="showSection('scrape')">🌍 Web Scraper</li>
-        <li id="nav-report"    onclick="showSection('report')">📊 Reports</li>
-        <li id="nav-audit"     onclick="showSection('audit')">🔑 Password Auditor</li>
+        <li id="nav-dashboard" class="active"
+            onclick="showSection('dashboard')">🏠 Dashboard</li>
+        <li id="nav-log"
+            onclick="showSection('log')">📄 Log Analysis</li>
+        <li id="nav-scan"
+            onclick="showSection('scan')">🌐 Network Scan</li>
+        <li id="nav-packet"
+            onclick="showSection('packet')">📦 Packet Capture</li>
+        <li id="nav-threat"
+            onclick="showSection('threat')">🛡 Threat Intel</li>
+        <li id="nav-scrape"
+            onclick="showSection('scrape')">🌍 Web Scraper</li>
+        <li id="nav-audit"
+            onclick="showSection('audit')">🔑 Password Audit</li>
+        <li id="nav-report"
+            onclick="showSection('report')">📊 Reports</li>
     </ul>
+
     <div class="sidebar-footer">
-        <button id="logoutBtn" onclick="doLogout()">🚪 Logout</button>
+        <div class="sidebar-user">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+                <div class="uname" id="sidebarUser">Analyst</div>
+                <div class="urole">SOC ANALYST</div>
+            </div>
+        </div>
+        <button id="logoutBtn" onclick="doLogout()">
+            🚪 Logout
+        </button>
     </div>
 </div>
 
@@ -54,20 +112,25 @@
 
     <!-- ===== DASHBOARD ===== -->
     <div id="dashboard" class="section active">
-        <div class="page-title">🏠 Dashboard
-            <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+        <div class="page-title">
+            🏠 Dashboard
+            <span class="live-badge">
+                <span class="live-dot"></span>LIVE
+            </span>
         </div>
 
         <div class="risk-score-box">
-            <div class="score-label">Security Risk Score</div>
+            <div class="score-label">SYSTEM RISK SCORE</div>
             <div class="score-num" id="riskScore">100</div>
-            <div class="score-status" id="riskStatus">🟢 System Secure</div>
+            <div class="score-status" id="riskStatus">
+                🟢 All Systems Secure
+            </div>
         </div>
 
         <div class="dash-cards">
             <div class="dash-card" onclick="showSection('log')">
                 <div class="icon">📄</div>
-                <div class="label">Log Analysis</div>
+                <div class="label">Log Entries</div>
                 <div class="value" id="dc-logs">—</div>
             </div>
             <div class="dash-card" onclick="showSection('scan')">
@@ -81,13 +144,13 @@
                 <div class="value" id="dc-packets">—</div>
             </div>
             <div class="dash-card" onclick="showSection('threat')">
-                <div class="icon">🛡</div>
-                <div class="label">Threats Found</div>
+                <div class="icon">🚨</div>
+                <div class="label">Threats Detected</div>
                 <div class="value" id="dc-threats">—</div>
             </div>
             <div class="dash-card" onclick="showSection('scrape')">
                 <div class="icon">🌍</div>
-                <div class="label">Web Scraper</div>
+                <div class="label">Links Scraped</div>
                 <div class="value" id="dc-scrape">—</div>
             </div>
             <div class="dash-card" onclick="showSection('report')">
@@ -109,9 +172,10 @@
         </div>
 
         <div class="chart-box" style="margin-bottom:20px;">
-            <h4>🚨 Recent Alerts</h4>
-            <div id="dashAlerts" style="min-height:60px;padding-top:8px;color:#64748b;font-size:13px;">
-                No alerts yet.
+            <h4>🚨 Recent Intrusion Alerts</h4>
+            <div id="dashAlerts" style="color:var(--text-muted);
+                font-size:13px;padding-top:8px;">
+                No alerts yet — system monitoring active.
             </div>
         </div>
     </div>
@@ -121,10 +185,12 @@
         <div class="page-title">📄 Log Analysis</div>
         <div class="input-row">
             <input type="file" id="logFile" accept=".log,.txt">
-            <button class="btn btn-primary" onclick="uploadLogs()">🔍 Analyze</button>
+            <button class="btn btn-primary"
+                onclick="uploadLogs()">🔍 Analyze</button>
         </div>
-        <div id="logOutput" class="output-box" style="color:#475569;">
-            Upload a .log or .txt file to begin analysis.
+        <div id="logOutput" class="output-box">
+            Upload a <strong>.log</strong> or <strong>.txt</strong>
+            file to begin analysis.
         </div>
     </div>
 
@@ -132,10 +198,12 @@
     <div id="scan" class="section">
         <div class="page-title">🌐 Network Scan</div>
         <div class="input-row">
-            <input id="scanIP" type="text" placeholder="Enter IP address (e.g. 192.168.1.1)">
-            <button class="btn btn-primary" onclick="scanIP()">🔍 Scan</button>
+            <input id="scanIP" type="text"
+                placeholder="Enter IP address (e.g. 192.168.1.1)">
+            <button class="btn btn-primary"
+                onclick="scanIP()">🔍 Scan</button>
         </div>
-        <div id="scanOutput" class="output-box" style="color:#475569;">
+        <div id="scanOutput" class="output-box">
             Enter an IP address and click Scan.
         </div>
     </div>
@@ -144,15 +212,24 @@
     <div id="packet" class="section">
         <div class="page-title">
             📦 Packet Capture
-            <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+            <span class="live-badge">
+                <span class="live-dot"></span>LIVE
+            </span>
         </div>
         <div class="btn-row">
-            <button class="btn btn-primary"   onclick="startPacket()">▶ Start Capture</button>
-            <button class="btn btn-danger"    onclick="stopPacket()">⏹ Stop</button>
-            <button class="btn btn-secondary" onclick="downloadJSON(window.lastPacketData,'packet_report')">⬇ Download JSON</button>
+            <button class="btn btn-primary"
+                onclick="startPacket()">▶ Start Capture</button>
+            <button class="btn btn-danger"
+                onclick="stopPacket()">⏹ Stop</button>
+            <button class="btn btn-secondary"
+                onclick="downloadJSON(
+                    window.lastPacketData,'packet_report')">
+                ⬇ Download JSON
+            </button>
         </div>
-        <div id="packetOutput" class="output-box" style="color:#475569;">
-            Click Start Capture to begin monitoring live traffic.
+        <div id="packetOutput" class="output-box">
+            Click <strong>Start Capture</strong>
+            to begin monitoring live network traffic.
         </div>
     </div>
 
@@ -160,11 +237,17 @@
     <div id="threat" class="section">
         <div class="page-title">🛡 Threat Intelligence</div>
         <div class="btn-row">
-            <button class="btn btn-primary"   onclick="getThreats()">🔄 Check Threats</button>
-            <button class="btn btn-secondary" onclick="downloadJSON(window.lastThreatData,'threat_report')">⬇ Download JSON</button>
+            <button class="btn btn-primary"
+                onclick="getThreats()">🔄 Check Threats</button>
+            <button class="btn btn-secondary"
+                onclick="downloadJSON(
+                    window.lastThreatData,'threat_report')">
+                ⬇ Download JSON
+            </button>
         </div>
-        <div id="threatOutput" class="output-box" style="color:#475569;">
-            Click Check Threats to cross-reference captured packets with known malicious IPs.
+        <div id="threatOutput" class="output-box">
+            Click <strong>Check Threats</strong> to cross-reference
+            captured packets with the abuse.ch malicious IP blocklist.
         </div>
     </div>
 
@@ -172,11 +255,28 @@
     <div id="scrape" class="section">
         <div class="page-title">🌍 Web Scraper</div>
         <div class="input-row">
-            <input id="scrapeURL" type="text" placeholder="Enter URL (e.g. https://example.com)">
-            <button class="btn btn-primary" onclick="scrapeSite()">🔍 Scrape</button>
+            <input id="scrapeURL" type="text"
+                placeholder="Enter URL (e.g. https://example.com)">
+            <button class="btn btn-primary"
+                onclick="scrapeSite()">🔍 Scrape</button>
         </div>
-        <div id="scrapeOutput" class="output-box" style="color:#475569;">
+        <div id="scrapeOutput" class="output-box">
             Enter a URL and click Scrape to analyze the website.
+        </div>
+    </div>
+
+    <!-- ===== PASSWORD AUDITOR ===== -->
+    <div id="audit" class="section">
+        <div class="page-title">🔑 Password Auditor</div>
+        <div class="input-row">
+            <input id="auditPwd" type="text"
+                placeholder="Enter any password to audit...">
+            <button class="btn btn-primary"
+                onclick="auditPassword()">🔍 Audit</button>
+        </div>
+        <div id="auditOutput" class="output-box">
+            Enter any password above to get a detailed
+            security strength analysis with crack time estimation.
         </div>
     </div>
 
@@ -185,41 +285,62 @@
         <div class="page-title">📊 Report Center</div>
 
         <div class="btn-row">
-            <button class="btn btn-primary"   onclick="generateFullReport()">📊 Generate Full Report</button>
-            <button class="btn btn-secondary" onclick="downloadFullJSON()">⬇ Full JSON</button>
-            <button class="btn btn-success"   onclick="downloadPDF()">📄 Download PDF</button>
+            <button class="btn btn-primary"
+                onclick="generateFullReport()">
+                📊 Generate Full Report
+            </button>
+            <button class="btn btn-secondary"
+                onclick="downloadFullJSON()">
+                ⬇ Full JSON
+            </button>
+            <button class="btn btn-success"
+                onclick="downloadPDF()">
+                📄 Download PDF
+            </button>
         </div>
 
         <div style="margin-bottom:16px;">
-            <p style="font-size:13px;color:#64748b;margin-bottom:10px;">Individual Section Downloads:</p>
+            <p style="font-size:12px;color:var(--text-muted);
+                margin-bottom:10px;letter-spacing:0.5px;">
+                INDIVIDUAL SECTION DOWNLOADS:
+            </p>
             <div class="btn-row">
-                <button class="btn btn-secondary" onclick="downloadJSON(window.lastLogData,   'log_report')">📄 Log</button>
-                <button class="btn btn-secondary" onclick="downloadJSON(window.lastScanData,  'scan_report')">🌐 Scan</button>
-                <button class="btn btn-secondary" onclick="downloadJSON(window.lastPacketData,'packet_report')">📦 Packet</button>
-                <button class="btn btn-secondary" onclick="downloadJSON(window.lastThreatData,'threat_report')">🛡 Threat</button>
-                <button class="btn btn-secondary" onclick="downloadJSON(window.lastScrapeData,'scrape_report')">🌍 Scrape</button>
+                <button class="btn btn-secondary"
+                    onclick="downloadJSON(
+                        window.lastLogData,'log_report')">
+                    📄 Log
+                </button>
+                <button class="btn btn-secondary"
+                    onclick="downloadJSON(
+                        window.lastScanData,'scan_report')">
+                    🌐 Scan
+                </button>
+                <button class="btn btn-secondary"
+                    onclick="downloadJSON(
+                        window.lastPacketData,'packet_report')">
+                    📦 Packet
+                </button>
+                <button class="btn btn-secondary"
+                    onclick="downloadJSON(
+                        window.lastThreatData,'threat_report')">
+                    🛡 Threat
+                </button>
+                <button class="btn btn-secondary"
+                    onclick="downloadJSON(
+                        window.lastScrapeData,'scrape_report')">
+                    🌍 Scrape
+                </button>
             </div>
         </div>
 
-        <div id="reportOutput" class="output-box" style="color:#475569;">
-            Click Generate Full Report to view combined results.
+        <div id="reportOutput" class="output-box">
+            Click <strong>Generate Full Report</strong>
+            to view combined investigation results.
         </div>
     </div>
 
 </div>
 
-<!-- ===== PASSWORD AUDITOR ===== -->
-    <div id="audit" class="section">
-        <div class="page-title">🔑 Password Auditor</div>
-        <div class="input-row">
-            <input id="auditPwd" type="text" placeholder="Enter password to audit...">
-            <button class="btn btn-primary" onclick="auditPassword()">🔍 Audit</button>
-        </div>
-        <div id="auditOutput" class="output-box" style="color:#475569;">
-            Enter any password above to get a detailed security analysis.
-        </div>
-    </div>
-    
 <script src="app.js" defer></script>
 </body>
 </html>

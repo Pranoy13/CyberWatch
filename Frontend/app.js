@@ -15,6 +15,7 @@ window.lastScrapeData = {};
 
 // ========== INIT ==========
 document.addEventListener("DOMContentLoaded", () => {
+    initMatrix();
     const overlay = document.getElementById("loginOverlay");
     if (localStorage.getItem("cw_loggedIn") === "true") {
         overlay.style.display = "none";
@@ -36,6 +37,78 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// ========== MATRIX BACKGROUND ==========
+function initMatrix() {
+    const canvas = document.getElementById("matrixCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノ";
+    const fontSize = 14;
+    const cols = Math.floor(canvas.width / fontSize);
+    const drops = Array(cols).fill(1);
+
+    function draw() {
+        ctx.fillStyle = "rgba(7,3,15,0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#8b5cf6";
+        ctx.font = fontSize + "px monospace";
+        drops.forEach((y, i) => {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(char, i * fontSize, y * fontSize);
+            if (y * fontSize > canvas.height && Math.random() > 0.975)
+                drops[i] = 0;
+            drops[i]++;
+        });
+    }
+
+    setInterval(draw, 50);
+
+    window.addEventListener("resize", () => {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+}
+
+// ========== LOGIN PAGE AUDIT ==========
+function toggleAudit() {
+    const box = document.getElementById("loginAuditBox");
+    box.classList.toggle("open");
+}
+
+function auditPasswordInline() {
+    const pwd = document.getElementById("auditPwdLogin").value;
+    const out = document.getElementById("auditInlineResult");
+    if (!pwd) { out.innerHTML = ""; return; }
+
+    let score = 0;
+    if (pwd.length >= 8)             score++;
+    if (pwd.length >= 12)            score++;
+    if (/[A-Z]/.test(pwd))           score++;
+    if (/[0-9]/.test(pwd))           score++;
+    if (/[!@#$%^&*()_+]/.test(pwd))  score++;
+
+    const pct    = Math.round((score / 5) * 100);
+    const colors = ["#ef4444","#ef4444","#f59e0b","#f59e0b","#10b981","#8b5cf6"];
+    const labels = ["Very Weak","Weak","Fair","Good","Strong","Excellent"];
+    const color  = colors[score] || "#ef4444";
+    const label  = labels[score] || "Very Weak";
+
+    out.innerHTML = `
+        <div style="display:flex;justify-content:space-between;
+            margin-bottom:6px;font-size:12px;">
+            <span style="color:${color};font-weight:700;">${label}</span>
+            <span style="color:var(--text-muted);">${pct}%</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;
+            height:4px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${color};
+                border-radius:10px;transition:0.4s;"></div>
+        </div>`;
+}
+
 // ========== LOGIN ==========
 async function doLogin() {
     const u = document.getElementById("loginUser").value.trim();
@@ -53,6 +126,13 @@ async function doLogin() {
             localStorage.setItem("cw_loggedIn", "true");
             localStorage.setItem("cw_user", u);
             document.getElementById("loginOverlay").style.display = "none";
+            // show username in sidebar
+            const u = localStorage.getItem("cw_user") || "Analyst";
+            const sidebarUser = document.getElementById("sidebarUser");
+            const avatar = document.getElementById("userAvatar");
+            if (sidebarUser) sidebarUser.innerText = u;
+            if (avatar) avatar.innerText = u.charAt(0).toUpperCase();
+                    
             initDashboard();
         } else {
             msg.innerText = "❌ Invalid username or password";
