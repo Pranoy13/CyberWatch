@@ -392,6 +392,8 @@ def generate_pdf():
 
 # ================= RUN =================
 if __name__ == "__main__":
+    import os
     threading.Thread(target=load_threat, daemon=True).start()
     threading.Thread(target=capture_packets, daemon=True).start()
-    app.run(debug=True, use_reloader=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
