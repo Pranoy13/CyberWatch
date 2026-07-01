@@ -14,46 +14,50 @@ window.lastThreatData = [];
 window.lastScrapeData = {};
 
 // ========== INIT ==========
-document.getElementById("loginPass").addEventListener("input", () => {
-        const p   = document.getElementById("loginPass").value;
-        const bar = document.getElementById("strengthBar");
-        const txt = document.getElementById("pwdStrength");
+document.addEventListener("DOMContentLoaded", () => {
+    initMatrix();
 
-        let score = 0;
-        if (p.length >= 8)           score++;
-        if (p.length >= 12)          score++;
-        if (/[A-Z]/.test(p))         score++;
-        if (/[0-9]/.test(p))         score++;
-        if (/[!@#$%^&*]/.test(p))    score++;
+    const overlay = document.getElementById("loginOverlay");
+    if (localStorage.getItem("cw_loggedIn") === "true") {
+        overlay.style.display = "none";
+        const u = localStorage.getItem("cw_user") || "Analyst";
+        const sidebarUser = document.getElementById("sidebarUser");
+        const avatar = document.getElementById("userAvatar");
+        if (sidebarUser) sidebarUser.innerText = u;
+        if (avatar) avatar.innerText = u.charAt(0).toUpperCase();
+        initDashboard();
+    } else {
+        overlay.style.display = "flex";
+    }
 
-        const pct    = Math.round((score / 5) * 100);
-        const colors = ["#ef4444","#ef4444","#f59e0b","#f59e0b","#10b981","#8b5cf6"];
-        const labels = ["","Weak ❌","Fair ⚠️","Good 👍","Strong ✅","Excellent 🔥"];
-        const color  = colors[score] || "#ef4444";
-        const label  = labels[score] || "";
-
-        if (bar) {
-            bar.style.width      = pct + "%";
-            bar.style.background = color;
-            bar.style.boxShadow  = `0 0 8px ${color}`;
-        }
-        if (txt) {
-            txt.innerText  = p ? `Password strength: ${label}` : "";
-            txt.style.color = color;
-        }
-    });
-
-    // password strength
-    document.getElementById("loginPass").addEventListener("input", () => {
-        const p = document.getElementById("loginPass").value;
-        let score = 0;
-        if (p.length >= 8)          score++;
-        if (/[A-Z]/.test(p))        score++;
-        if (/[0-9]/.test(p))        score++;
-        if (/[!@#$%^&*]/.test(p))   score++;
-        const labels = ["", "Weak ❌", "Medium ⚠️", "Strong ✅", "Very Strong 🔥"];
-        document.getElementById("pwdStrength").innerText = score ? "Password: " + labels[score] : "";
-    });
+    const passInput = document.getElementById("loginPass");
+    if (passInput) {
+        passInput.addEventListener("input", () => {
+            const p   = passInput.value;
+            const bar = document.getElementById("strengthBar");
+            const txt = document.getElementById("pwdStrength");
+            let score = 0;
+            if (p.length >= 8)        score++;
+            if (p.length >= 12)       score++;
+            if (/[A-Z]/.test(p))      score++;
+            if (/[0-9]/.test(p))      score++;
+            if (/[!@#$%^&*]/.test(p)) score++;
+            const pct    = Math.round((score / 5) * 100);
+            const colors = ["#ef4444","#ef4444","#f59e0b","#f59e0b","#10b981","#8b5cf6"];
+            const labels = ["","Weak ❌","Fair ⚠️","Good 👍","Strong ✅","Excellent 🔥"];
+            const color  = colors[score] || "#ef4444";
+            const label  = labels[score] || "";
+            if (bar) {
+                bar.style.width     = pct + "%";
+                bar.style.background = color;
+                bar.style.boxShadow = `0 0 8px ${color}`;
+            }
+            if (txt) {
+                txt.innerText   = p ? `Password strength: ${label}` : "";
+                txt.style.color = color;
+            }
+        });
+    }
 });
 
 // ========== MATRIX BACKGROUND ==========
@@ -63,17 +67,15 @@ function initMatrix() {
     const ctx = canvas.getContext("2d");
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノ";
+    const chars    = "01アイウエオカキクケコサシスセソタチツテトナニヌネノ";
     const fontSize = 14;
-    const cols = Math.floor(canvas.width / fontSize);
-    const drops = Array(cols).fill(1);
-
+    const cols     = Math.floor(canvas.width / fontSize);
+    const drops    = Array(cols).fill(1);
     function draw() {
         ctx.fillStyle = "rgba(7,3,15,0.05)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#8b5cf6";
-        ctx.font = fontSize + "px monospace";
+        ctx.font      = fontSize + "px monospace";
         drops.forEach((y, i) => {
             const char = chars[Math.floor(Math.random() * chars.length)];
             ctx.fillText(char, i * fontSize, y * fontSize);
@@ -82,13 +84,24 @@ function initMatrix() {
             drops[i]++;
         });
     }
-
     setInterval(draw, 50);
-
     window.addEventListener("resize", () => {
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
     });
+}
+
+// ========== SHOW/HIDE PASSWORD ==========
+function togglePassword() {
+    const pass = document.getElementById("loginPass");
+    const eye  = document.getElementById("eyeIcon");
+    if (pass.type === "password") {
+        pass.type     = "text";
+        eye.innerText = "🙈";
+    } else {
+        pass.type     = "password";
+        eye.innerText = "👁";
+    }
 }
 
 // ========== LOGIN PAGE AUDIT ==========
@@ -101,20 +114,17 @@ function auditPasswordInline() {
     const pwd = document.getElementById("auditPwdLogin").value;
     const out = document.getElementById("auditInlineResult");
     if (!pwd) { out.innerHTML = ""; return; }
-
     let score = 0;
-    if (pwd.length >= 8)             score++;
-    if (pwd.length >= 12)            score++;
-    if (/[A-Z]/.test(pwd))           score++;
-    if (/[0-9]/.test(pwd))           score++;
-    if (/[!@#$%^&*()_+]/.test(pwd))  score++;
-
+    if (pwd.length >= 8)            score++;
+    if (pwd.length >= 12)           score++;
+    if (/[A-Z]/.test(pwd))          score++;
+    if (/[0-9]/.test(pwd))          score++;
+    if (/[!@#$%^&*()_+]/.test(pwd)) score++;
     const pct    = Math.round((score / 5) * 100);
     const colors = ["#ef4444","#ef4444","#f59e0b","#f59e0b","#10b981","#8b5cf6"];
     const labels = ["Very Weak","Weak","Fair","Good","Strong","Excellent"];
     const color  = colors[score] || "#ef4444";
     const label  = labels[score] || "Very Weak";
-
     out.innerHTML = `
         <div style="display:flex;justify-content:space-between;
             margin-bottom:6px;font-size:12px;">
@@ -133,40 +143,36 @@ async function doLogin() {
     const u   = document.getElementById("loginUser").value.trim();
     const p   = document.getElementById("loginPass").value.trim();
     const msg = document.getElementById("loginMsg");
-
     if (!u || !p) {
         msg.style.color = "#f59e0b";
-        msg.innerText = "⚠️ Enter both username and password";
+        msg.innerText   = "⚠️ Enter both username and password";
         return;
     }
-
     msg.style.color = "#94a3b8";
-    msg.innerText = "⏳ Logging in...";
-
+    msg.innerText   = "⏳ Logging in...";
     try {
         const res  = await fetch(`${API}/login`, {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: u, password: p })
+            body:    JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
-
         if (data.status === "success") {
             localStorage.setItem("cw_loggedIn", "true");
             localStorage.setItem("cw_user", u);
             document.getElementById("loginOverlay").style.display = "none";
             const sidebarUser = document.getElementById("sidebarUser");
-            const avatar = document.getElementById("userAvatar");
+            const avatar      = document.getElementById("userAvatar");
             if (sidebarUser) sidebarUser.innerText = u;
-            if (avatar) avatar.innerText = u.charAt(0).toUpperCase();
+            if (avatar)      avatar.innerText      = u.charAt(0).toUpperCase();
             initDashboard();
         } else {
             msg.style.color = "#ef4444";
-            msg.innerText = "❌ Wrong credentials. If new user, click Register first.";
+            msg.innerText   = "❌ Wrong credentials. If new user, click Register first.";
         }
     } catch {
         msg.style.color = "#f59e0b";
-        msg.innerText = "⚠️ Server is waking up (free tier). Wait 30 seconds and try again.";
+        msg.innerText   = "⚠️ Server waking up (free tier). Wait 30 seconds and try again.";
     }
 }
 
@@ -175,33 +181,28 @@ async function doRegister() {
     const u   = document.getElementById("loginUser").value.trim();
     const p   = document.getElementById("loginPass").value.trim();
     const msg = document.getElementById("loginMsg");
-
     if (!u || !p) {
         msg.style.color = "#f59e0b";
-        msg.innerText = "⚠️ Enter username and password first";
+        msg.innerText   = "⚠️ Enter username and password first";
         return;
     }
     if (p.length < 6) {
         msg.style.color = "#ef4444";
-        msg.innerText = "❌ Password must be at least 6 characters";
+        msg.innerText   = "❌ Password must be at least 6 characters";
         return;
     }
-
     msg.style.color = "#94a3b8";
-    msg.innerText = "⏳ Registering...";
-
+    msg.innerText   = "⏳ Registering...";
     try {
         const res  = await fetch(`${API}/register`, {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: u, password: p })
+            body:    JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
-
         if (data.status === "registered") {
             msg.style.color = "#10b981";
-            msg.innerText = `✅ Account "${u}" created! Now click Login.`;
-            // highlight login button
+            msg.innerText   = `✅ Account "${u}" created! Now click Login.`;
             document.querySelector(".btn-login").style.boxShadow =
                 "0 0 20px rgba(16,185,129,0.5)";
             setTimeout(() => {
@@ -209,11 +210,11 @@ async function doRegister() {
             }, 3000);
         } else {
             msg.style.color = "#f59e0b";
-            msg.innerText = `⚠️ Username "${u}" already taken. Try a different one or just login.`;
+            msg.innerText   = `⚠️ Username "${u}" already taken. Try another or just login.`;
         }
     } catch {
         msg.style.color = "#ef4444";
-        msg.innerText = "⚠️ Server waking up, wait 30 seconds and try again.";
+        msg.innerText   = "⚠️ Server waking up, wait 30 seconds and try again.";
     }
 }
 
@@ -235,7 +236,7 @@ function showSection(id) {
     if (nav) nav.classList.add("active");
 }
 
-// ========== DASHBOARD INIT ==========
+// ========== DASHBOARD ==========
 function initDashboard() {
     drawPieChart(1, 0);
     drawLineChart();
@@ -245,19 +246,15 @@ function initDashboard() {
 }
 
 function updateDashboard() {
-    // update packet count card
     document.getElementById("dc-packets").innerText = window.lastPacketData.length || "—";
-    // update threat count card
     document.getElementById("dc-threats").innerText = window.lastThreatData.length || "—";
-    // risk score
     updateRiskScore();
 }
 
 function updateRiskScore() {
-    const threats  = window.lastThreatData.length || 0;
-    const failed   = window.lastLogData.failed    || 0;
-    let score = Math.max(0, 100 - (threats * 10) - (failed * 2));
-    score = Math.min(100, score);
+    const threats = window.lastThreatData.length || 0;
+    const failed  = window.lastLogData.failed    || 0;
+    let score = Math.max(0, Math.min(100, 100 - (threats * 10) - (failed * 2)));
     document.getElementById("riskScore").innerText = score;
     const el = document.getElementById("riskStatus");
     if (score >= 80) {
@@ -281,11 +278,9 @@ function drawPieChart(safe, threat) {
         type: "doughnut",
         data: {
             labels: ["Safe", "Threat"],
-            datasets: [{
-                data: [safe, threat],
-                backgroundColor: ["#22c55e", "#ef4444"],
-                borderWidth: 0
-            }]
+            datasets: [{ data: [safe, threat],
+                backgroundColor: ["#22c55e","#ef4444"],
+                borderWidth: 0 }]
         },
         options: {
             responsive: true,
@@ -307,11 +302,9 @@ function drawLineChart() {
             datasets: [{
                 label: "Packets/interval",
                 data: lineData,
-                borderColor: "#38bdf8",
-                backgroundColor: "rgba(56,189,248,0.08)",
-                tension: 0.4,
-                fill: true,
-                pointRadius: 3
+                borderColor: "#8b5cf6",
+                backgroundColor: "rgba(139,92,246,0.08)",
+                tension: 0.4, fill: true, pointRadius: 3
             }]
         },
         options: {
@@ -368,21 +361,15 @@ async function pollAlerts() {
         const res  = await fetch(`${API}/alerts`);
         const data = await res.json();
         if (!Array.isArray(data)) return;
-
         const box = document.getElementById("dashAlerts");
         if (data.length === 0) {
-            box.innerHTML = `<span style="color:#475569">No alerts yet.</span>`;
+            box.innerHTML = `<span style="color:#475569">No alerts yet — system monitoring active.</span>`;
             return;
         }
-
         box.innerHTML = data.slice(-5).reverse().map(a => `
             <div style="padding:8px 12px;border-radius:8px;margin-bottom:6px;
                 background:rgba(239,68,68,0.08);border:1px solid #ef444450;
-                font-size:13px;color:#fca5a5;">
-                ${a.msg}
-            </div>`).join("");
-
-        // show popup for latest
+                font-size:13px;color:#fca5a5;">${a.msg}</div>`).join("");
         const latest = data[data.length - 1];
         showPopup(latest.msg, latest.type || "critical");
         updateDashboard();
@@ -391,24 +378,38 @@ async function pollAlerts() {
 
 function showPopup(msg, type = "critical") {
     const container = document.getElementById("alertContainer");
-    const div = document.createElement("div");
-    div.className = `alert-popup ${type}`;
-    div.innerText  = msg;
-    div.onclick    = () => div.remove();
+    const div       = document.createElement("div");
+    div.className   = `alert-popup ${type}`;
+    div.innerText   = msg;
+    div.onclick     = () => div.remove();
     container.appendChild(div);
-    // play sound for critical alerts
     if (type === "critical") playAlertSound();
     setTimeout(() => div.remove(), 5000);
+}
+
+// ========== ALERT SOUND ==========
+function playAlertSound() {
+    try {
+        const ctx        = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gainNode   = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.type            = "sine";
+        oscillator.frequency.value = 880;
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.6);
+    } catch {}
 }
 
 // ========== LOG ANALYSIS ==========
 async function uploadLogs() {
     const file = document.getElementById("logFile").files[0];
     if (!file) { showPopup("⚠️ Please select a file first", "warning"); return; }
-
-    const out = document.getElementById("logOutput");
+    const out  = document.getElementById("logOutput");
     out.innerHTML = `<span class="spinner"></span> Analyzing logs...`;
-
     const text = await file.text();
     try {
         const res  = await fetch(`${API}/analyze`, {
@@ -418,15 +419,10 @@ async function uploadLogs() {
         });
         const data = await res.json();
         if (data.error) { out.innerHTML = `<span style="color:#ef4444">Error: ${data.error}</span>`; return; }
-
         window.lastLogData = data;
         document.getElementById("dc-logs").innerText = data.total;
-
-        // update pie chart
         drawPieChart(data.total - data.failed, data.failed);
         updateRiskScore();
-
-        // suspicious alert box
         let suspHTML = "";
         if (data.suspicious && data.suspicious.length > 0) {
             suspHTML = `
@@ -438,19 +434,15 @@ async function uploadLogs() {
                 ).join("")}
             </div>`;
         }
-
-        // table rows
         const rows = (data.logs || []).slice(0, 50).map(l => {
-            const badge = l.risk === "High"   ? "badge-red"
-                        : l.risk === "Medium" ? "badge-yellow"
-                        : "badge-green";
+            const badge = l.risk === "High" ? "badge-red"
+                        : l.risk === "Medium" ? "badge-yellow" : "badge-green";
             return `<tr>
                 <td>${l.ip}</td>
                 <td><span class="badge ${badge}">${l.risk}</span></td>
                 <td style="font-size:11px;color:#64748b;">${l.raw}</td>
             </tr>`;
         }).join("");
-
         out.innerHTML = `
             <div class="stat-row">
                 <div class="stat-box">
@@ -482,12 +474,9 @@ async function uploadLogs() {
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
-
-        // draw IP bar chart
         if (data.ip_stats) drawIPChart(data.ip_stats);
-
-    } catch (e) {
-        out.innerHTML = `<span style="color:#ef4444">Failed to connect to backend. Is app.py running?</span>`;
+    } catch {
+        out.innerHTML = `<span style="color:#ef4444">Failed to connect to backend.</span>`;
     }
 }
 
@@ -496,9 +485,7 @@ async function scanIP() {
     const ip  = document.getElementById("scanIP").value.trim();
     const out = document.getElementById("scanOutput");
     if (!ip) { showPopup("⚠️ Enter an IP address", "warning"); return; }
-
-    out.innerHTML = `<span class="spinner"></span> Scanning ${ip} — this may take 15–30 seconds...`;
-
+    out.innerHTML = `<span class="spinner"></span> Scanning ${ip}...`;
     try {
         const res  = await fetch(`${API}/scan`, {
             method: "POST",
@@ -507,14 +494,11 @@ async function scanIP() {
         });
         const data = await res.json();
         if (data.error) { out.innerHTML = `<span style="color:#ef4444">Error: ${data.error}</span>`; return; }
-
         window.lastScanData = data;
         document.getElementById("dc-ports").innerText = data.open;
-
         const rows = (data.ports || []).map(p => {
-            const badge = p.risk.includes("High")   ? "badge-red"
-                        : p.risk.includes("Medium") ? "badge-yellow"
-                        : "badge-green";
+            const badge     = p.risk.includes("High") ? "badge-red"
+                            : p.risk.includes("Medium") ? "badge-yellow" : "badge-green";
             const statBadge = p.status === "open" ? "badge-green" : "badge-yellow";
             return `<tr>
                 <td><strong>${p.port}</strong></td>
@@ -523,7 +507,6 @@ async function scanIP() {
                 <td><span class="badge ${badge}">${p.risk}</span></td>
             </tr>`;
         }).join("");
-
         out.innerHTML = `
             <div class="stat-row">
                 <div class="stat-box">
@@ -553,7 +536,6 @@ async function scanIP() {
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
-
     } catch {
         out.innerHTML = `<span style="color:#ef4444">Failed to connect to backend.</span>`;
     }
@@ -578,33 +560,27 @@ async function fetchPackets() {
         const res  = await fetch(`${API}/packet`);
         const data = await res.json();
         if (!Array.isArray(data)) return;
-
         window.lastPacketData = data;
         document.getElementById("dc-packets").innerText = data.length;
         updateLineChart(data.length);
-
         const out = document.getElementById("packetOutput");
         if (data.length === 0) {
-            out.innerHTML = `<span style="color:#475569">No packets captured yet. Traffic will appear shortly...</span>`;
+            out.innerHTML = `<span style="color:#475569">No packets captured yet.</span>`;
             return;
         }
-
         const rows = data.slice(-20).reverse().map(p => {
             const badge = p.threat.includes("Malicious") ? "badge-red"
-                        : p.threat.includes("External")  ? "badge-yellow"
-                        : "badge-green";
+                        : p.threat.includes("External")  ? "badge-yellow" : "badge-green";
             return `<tr>
                 <td>${p.src}</td>
                 <td>${p.dst}</td>
                 <td><span class="badge badge-blue">${p.protocol}</span></td>
                 <td style="font-size:11px;color:#64748b;max-width:180px;
                     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    ${p.payload || "—"}
-                </td>
+                    ${p.payload || "—"}</td>
                 <td><span class="badge ${badge}">${p.threat}</span></td>
             </tr>`;
         }).join("");
-
         out.innerHTML = `
             <div class="stat-row">
                 <div class="stat-box">
@@ -614,13 +590,13 @@ async function fetchPackets() {
                 <div class="stat-box">
                     <div class="s-label">External IPs</div>
                     <div class="s-value yellow">
-                        ${data.filter(p => p.threat.includes("External") || p.threat.includes("Malicious")).length}
+                        ${data.filter(p=>p.threat.includes("External")||p.threat.includes("Malicious")).length}
                     </div>
                 </div>
                 <div class="stat-box">
                     <div class="s-label">Safe</div>
                     <div class="s-value green">
-                        ${data.filter(p => p.threat.includes("Safe")).length}
+                        ${data.filter(p=>p.threat.includes("Safe")).length}
                     </div>
                 </div>
             </div>
@@ -633,7 +609,6 @@ async function fetchPackets() {
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
-
     } catch {}
 }
 
@@ -641,39 +616,33 @@ async function fetchPackets() {
 async function getThreats() {
     const out = document.getElementById("threatOutput");
     out.innerHTML = `<span class="spinner"></span> Checking against abuse.ch blocklist...`;
-
     try {
         const res  = await fetch(`${API}/threat-check`);
         const data = await res.json();
         if (data.error) { out.innerHTML = `<span style="color:#ef4444">${data.error}</span>`; return; }
-
         window.lastThreatData = data;
         document.getElementById("dc-threats").innerText = data.length;
         updateRiskScore();
-
         if (data.length === 0) {
             out.innerHTML = `
                 <div style="text-align:center;padding:30px;color:#22c55e;">
                     <div style="font-size:40px;">✅</div>
                     <div style="margin-top:10px;font-size:16px;font-weight:700;">No Threats Detected</div>
                     <div style="font-size:13px;color:#475569;margin-top:6px;">
-                        All captured IPs are clean against abuse.ch blocklist
-                    </div>
+                        All captured IPs clean against abuse.ch blocklist</div>
                 </div>`;
             return;
         }
-
         const rows = data.map(t => `
             <tr>
                 <td><strong>${t.ip}</strong></td>
                 <td><span class="badge badge-red">${t.status}</span></td>
                 <td>${t.source || "abuse.ch"}</td>
             </tr>`).join("");
-
         out.innerHTML = `
             <div class="alert-box">
                 <h4>🚨 ${data.length} Malicious IP(s) Detected</h4>
-                <p>These IPs were found in captured packets and match the abuse.ch feodotracker blocklist.</p>
+                <p>These IPs match the abuse.ch feodotracker blocklist.</p>
             </div>
             <div class="table-wrap">
                 <table>
@@ -683,7 +652,6 @@ async function getThreats() {
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
-
     } catch {
         out.innerHTML = `<span style="color:#ef4444">Failed to connect to backend.</span>`;
     }
@@ -694,9 +662,7 @@ async function scrapeSite() {
     const url = document.getElementById("scrapeURL").value.trim();
     const out = document.getElementById("scrapeOutput");
     if (!url) { showPopup("⚠️ Enter a URL", "warning"); return; }
-
     out.innerHTML = `<span class="spinner"></span> Scraping ${url}...`;
-
     try {
         const res  = await fetch(`${API}/scrape`, {
             method: "POST",
@@ -705,53 +671,36 @@ async function scrapeSite() {
         });
         const data = await res.json();
         if (data.error) { out.innerHTML = `<span style="color:#ef4444">Error: ${data.error}</span>`; return; }
-
         window.lastScrapeData = data;
         document.getElementById("dc-scrape").innerText = data.links ? data.links.length : "—";
-
         const riskBadge = data.phishing_risk.includes("High")   ? "badge-red"
-                        : data.phishing_risk.includes("Medium") ? "badge-yellow"
-                        : "badge-green";
-
-        const linksList  = (data.links  || []).slice(0, 15).map(l =>
+                        : data.phishing_risk.includes("Medium") ? "badge-yellow" : "badge-green";
+        const linksList = (data.links  || []).slice(0,15).map(l =>
             `<a href="${l}" target="_blank">${l}</a>`).join("");
-        const imgList    = (data.images || []).slice(0, 10).map(i =>
-            `<p>${i}</p>`).join("");
-        const formsList  = (data.forms  || []).slice(0, 5).map(f =>
+        const imgList   = (data.images || []).slice(0,10).map(i => `<p>${i}</p>`).join("");
+        const formsList = (data.forms  || []).slice(0,5).map(f =>
             `<p style="font-size:11px;">${f}</p>`).join("");
-
         out.innerHTML = `
             <div class="stat-row">
-                <div class="stat-box">
-                    <div class="s-label">Headings</div>
-                    <div class="s-value">${data.headings}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="s-label">Paragraphs</div>
-                    <div class="s-value">${data.paragraphs}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="s-label">Links</div>
-                    <div class="s-value blue">${(data.links||[]).length}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="s-label">Images</div>
-                    <div class="s-value">${(data.images||[]).length}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="s-label">Forms</div>
-                    <div class="s-value yellow">${(data.forms||[]).length}</div>
-                </div>
+                <div class="stat-box"><div class="s-label">Headings</div>
+                    <div class="s-value">${data.headings}</div></div>
+                <div class="stat-box"><div class="s-label">Paragraphs</div>
+                    <div class="s-value">${data.paragraphs}</div></div>
+                <div class="stat-box"><div class="s-label">Links</div>
+                    <div class="s-value blue">${(data.links||[]).length}</div></div>
+                <div class="stat-box"><div class="s-label">Images</div>
+                    <div class="s-value">${(data.images||[]).length}</div></div>
+                <div class="stat-box"><div class="s-label">Forms</div>
+                    <div class="s-value yellow">${(data.forms||[]).length}</div></div>
             </div>
             <div style="margin-bottom:16px;">
                 <strong style="color:#94a3b8;">Title:</strong>
-                <span style="color:#38bdf8;"> ${data.title}</span><br>
+                <span style="color:#a78bfa;"> ${data.title}</span><br>
                 <strong style="color:#94a3b8;">URL:</strong>
                 <span style="color:#64748b;font-size:13px;"> ${data.url}</span><br>
                 <strong style="color:#94a3b8;">Phishing Risk:</strong>
                 <span class="badge ${riskBadge}" style="margin-left:6px;">
-                    ${data.phishing_risk}
-                </span>
+                    ${data.phishing_risk}</span>
             </div>
             <div class="btn-row">
                 <button class="btn btn-secondary"
@@ -773,21 +722,95 @@ async function scrapeSite() {
                     ${formsList || "<p style='color:#475569'>None found</p>"}
                 </div>
             </div>`;
-
     } catch {
         out.innerHTML = `<span style="color:#ef4444">Failed to connect to backend.</span>`;
     }
 }
 
+// ========== PASSWORD AUDITOR ==========
+function auditPassword() {
+    const pwd = document.getElementById("auditPwd").value;
+    const out = document.getElementById("auditOutput");
+    if (!pwd) { out.innerHTML = `<span style="color:#ef4444">Enter a password to audit.</span>`; return; }
+    let score    = 0;
+    let feedback = [];
+    if (pwd.length >= 8)             { score++; } else { feedback.push("❌ Use at least 8 characters"); }
+    if (pwd.length >= 12)            { score++; } else { feedback.push("⚠️ 12+ characters is stronger"); }
+    if (/[A-Z]/.test(pwd))           { score++; } else { feedback.push("❌ Add uppercase letters (A-Z)"); }
+    if (/[a-z]/.test(pwd))           { score++; } else { feedback.push("❌ Add lowercase letters (a-z)"); }
+    if (/[0-9]/.test(pwd))           { score++; } else { feedback.push("❌ Add numbers (0-9)"); }
+    if (/[!@#$%^&*()_+]/.test(pwd))  { score++; } else { feedback.push("❌ Add special characters (!@#$...)"); }
+    const commonPwds = ["password","123456","admin","qwerty","letmein","welcome","monkey","password1"];
+    if (commonPwds.includes(pwd.toLowerCase())) {
+        score    = 0;
+        feedback = ["🚨 This is a commonly used password — extremely weak!"];
+    }
+    const levels = [
+        { label: "Very Weak",   color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+        { label: "Weak",        color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+        { label: "Fair",        color: "#eab308", bg: "rgba(234,179,8,0.1)" },
+        { label: "Good",        color: "#eab308", bg: "rgba(234,179,8,0.1)" },
+        { label: "Strong",      color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+        { label: "Very Strong", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+        { label: "Excellent",   color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" }
+    ];
+    const lvl       = levels[Math.min(score, levels.length - 1)];
+    const pct       = Math.round((score / 6) * 100);
+    const crackTime = score <= 1 ? "Instantly" : score <= 2 ? "Minutes"
+                    : score <= 3 ? "Hours"     : score <= 4 ? "Days"
+                    : score <= 5 ? "Years"     : "Centuries";
+    out.innerHTML = `
+        <div style="background:${lvl.bg};border:1px solid ${lvl.color};
+            border-radius:12px;padding:20px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;
+                align-items:center;margin-bottom:12px;">
+                <span style="font-size:20px;font-weight:800;color:${lvl.color};">${lvl.label}</span>
+                <span style="font-size:28px;font-weight:900;color:${lvl.color};">${pct}%</span>
+            </div>
+            <div style="background:#0a0f1e;border-radius:20px;height:10px;
+                overflow:hidden;margin-bottom:12px;">
+                <div style="width:${pct}%;height:100%;background:${lvl.color};
+                    border-radius:20px;transition:0.5s;"></div>
+            </div>
+            <div style="display:flex;gap:20px;">
+                <div>
+                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Length</div>
+                    <div style="font-weight:700;color:#e2e8f0;">${pwd.length} chars</div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Est. Crack Time</div>
+                    <div style="font-weight:700;color:${lvl.color};">${crackTime}</div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Score</div>
+                    <div style="font-weight:700;color:#e2e8f0;">${score}/6</div>
+                </div>
+            </div>
+        </div>
+        ${feedback.length > 0 ? `
+        <div style="background:#0f172a;border:1px solid #1e293b;
+            border-radius:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:10px;">
+                💡 Recommendations:</div>
+            ${feedback.map(f => `
+                <div style="font-size:13px;color:#cbd5e1;padding:4px 0;
+                    border-bottom:1px solid #1e293b;">${f}</div>`).join("")}
+        </div>` : `
+        <div style="background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;
+            border-radius:12px;padding:16px;text-align:center;
+            color:#a78bfa;font-weight:700;">
+            ✅ Excellent password! All security criteria met.
+        </div>`}`;
+}
+
 // ========== REPORTS ==========
 function generateFullReport() {
-    const out = document.getElementById("reportOutput");
+    const out    = document.getElementById("reportOutput");
     const log    = window.lastLogData;
     const scan   = window.lastScanData;
     const packet = window.lastPacketData;
     const threat = window.lastThreatData;
     const scrape = window.lastScrapeData;
-
     out.innerHTML = `
         <div class="report-grid">
             <div class="report-card">
@@ -817,8 +840,7 @@ function generateFullReport() {
             <div class="report-card">
                 <h4>🛡 Threat Intelligence</h4>
                 <p>Malicious IPs Found: <strong style="color:#ef4444">
-                    ${threat.length || "0"}
-                </strong><br>
+                    ${threat.length || "0"}</strong><br>
                 Source: <strong>abuse.ch feodotracker</strong></p>
             </div>
             <div class="report-card">
@@ -831,7 +853,7 @@ function generateFullReport() {
             </div>
             <div class="report-card">
                 <h4>📊 Risk Score</h4>
-                <p>Current Score: <strong style="color:#38bdf8;font-size:24px;">
+                <p>Current Score: <strong style="color:#a78bfa;font-size:24px;">
                     ${document.getElementById("riskScore").innerText}
                 </strong><br>
                 Status: <strong>${document.getElementById("riskStatus").innerText}</strong></p>
@@ -887,118 +909,5 @@ async function downloadPDF() {
         URL.revokeObjectURL(url);
     } catch {
         showPopup("⚠️ PDF generation failed.", "critical");
-    }
-}
-
-// ========== ALERT SOUND ==========
-function playAlertSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = ctx.createOscillator();
-        const gainNode   = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.type            = 'sine';
-        oscillator.frequency.value = 880;
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.6);
-    } catch {}
-}
-
-// ========== PASSWORD AUDITOR ==========
-function auditPassword() {
-    const pwd = document.getElementById("auditPwd").value;
-    const out = document.getElementById("auditOutput");
-    if (!pwd) { out.innerHTML = `<span style="color:#ef4444">Enter a password to audit.</span>`; return; }
-
-    let score    = 0;
-    let feedback = [];
-
-    if (pwd.length >= 8)          { score++; } else { feedback.push("❌ Use at least 8 characters"); }
-    if (pwd.length >= 12)         { score++; } else { feedback.push("⚠️ 12+ characters is stronger"); }
-    if (/[A-Z]/.test(pwd))        { score++; } else { feedback.push("❌ Add uppercase letters (A-Z)"); }
-    if (/[a-z]/.test(pwd))        { score++; } else { feedback.push("❌ Add lowercase letters (a-z)"); }
-    if (/[0-9]/.test(pwd))        { score++; } else { feedback.push("❌ Add numbers (0-9)"); }
-    if (/[!@#$%^&*()_+]/.test(pwd)) { score++; } else { feedback.push("❌ Add special characters (!@#$...)"); }
-
-    const commonPwds = ["password","123456","admin","qwerty","letmein","welcome","monkey","password1"];
-    if (commonPwds.includes(pwd.toLowerCase())) {
-        score = 0;
-        feedback = ["🚨 This is a commonly used password — extremely weak!"];
-    }
-
-    const levels = [
-        { label: "Very Weak",  color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-        { label: "Weak",       color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-        { label: "Fair",       color: "#eab308", bg: "rgba(234,179,8,0.1)" },
-        { label: "Good",       color: "#eab308", bg: "rgba(234,179,8,0.1)" },
-        { label: "Strong",     color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-        { label: "Very Strong",color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-        { label: "Excellent",  color: "#38bdf8", bg: "rgba(56,189,248,0.1)" }
-    ];
-
-    const lvl     = levels[Math.min(score, levels.length - 1)];
-    const pct     = Math.round((score / 6) * 100);
-    const crackTime = score <= 1 ? "Instantly"
-                    : score <= 2 ? "Minutes"
-                    : score <= 3 ? "Hours"
-                    : score <= 4 ? "Days"
-                    : score <= 5 ? "Years"
-                    : "Centuries";
-
-    out.innerHTML = `
-        <div style="background:${lvl.bg};border:1px solid ${lvl.color};
-            border-radius:12px;padding:20px;margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <span style="font-size:20px;font-weight:800;color:${lvl.color};">${lvl.label}</span>
-                <span style="font-size:28px;font-weight:900;color:${lvl.color};">${pct}%</span>
-            </div>
-            <div style="background:#0a0f1e;border-radius:20px;height:10px;overflow:hidden;margin-bottom:12px;">
-                <div style="width:${pct}%;height:100%;background:${lvl.color};
-                    border-radius:20px;transition:0.5s;"></div>
-            </div>
-            <div style="display:flex;gap:20px;">
-                <div>
-                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Length</div>
-                    <div style="font-weight:700;color:#e2e8f0;">${pwd.length} chars</div>
-                </div>
-                <div>
-                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Est. Crack Time</div>
-                    <div style="font-weight:700;color:${lvl.color};">${crackTime}</div>
-                </div>
-                <div>
-                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Score</div>
-                    <div style="font-weight:700;color:#e2e8f0;">${score}/6</div>
-                </div>
-            </div>
-        </div>
-        ${feedback.length > 0 ? `
-        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;">
-            <div style="font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:10px;">
-                💡 Recommendations:
-            </div>
-            ${feedback.map(f => `
-                <div style="font-size:13px;color:#cbd5e1;padding:4px 0;
-                    border-bottom:1px solid #1e293b;">${f}</div>
-            `).join("")}
-        </div>` : `
-        <div style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;
-            border-radius:12px;padding:16px;text-align:center;color:#22c55e;font-weight:700;">
-            ✅ Excellent password! All security criteria met.
-        </div>`}`;
-}
-
-
-function togglePassword() {
-    const pass = document.getElementById("loginPass");
-    const eye  = document.getElementById("eyeIcon");
-    if (pass.type === "password") {
-        pass.type = "text";
-        eye.innerText = "🙈";
-    } else {
-        pass.type = "password";
-        eye.innerText = "👁";
     }
 }
