@@ -31,8 +31,20 @@
         <input id="loginUser" type="text"
             placeholder="Username" autocomplete="off">
 
+    <div style="position:relative;z-index:1;margin-bottom:12px;">
         <input id="loginPass" type="password"
-            placeholder="Password">
+            placeholder="Password"
+            style="width:100%;padding:13px 45px 13px 16px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid var(--border);border-radius:12px;
+            color:var(--text);font-size:14px;outline:none;
+            transition:0.3s;margin-bottom:0;">
+        <span onclick="togglePassword()"
+            id="eyeIcon"
+            style="position:absolute;right:14px;top:50%;
+            transform:translateY(-50%);cursor:pointer;
+            font-size:18px;user-select:none;z-index:2;">👁</span>
+    </div>
 
         <div class="strength-bar-wrap">
             <div class="strength-bar" id="strengthBar"></div>

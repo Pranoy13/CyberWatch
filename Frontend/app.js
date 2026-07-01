@@ -111,10 +111,19 @@ function auditPasswordInline() {
 
 // ========== LOGIN ==========
 async function doLogin() {
-    const u = document.getElementById("loginUser").value.trim();
-    const p = document.getElementById("loginPass").value.trim();
+    const u   = document.getElementById("loginUser").value.trim();
+    const p   = document.getElementById("loginPass").value.trim();
     const msg = document.getElementById("loginMsg");
-    if (!u || !p) { msg.innerText = "⚠️ Enter username and password"; return; }
+
+    if (!u || !p) {
+        msg.style.color = "#f59e0b";
+        msg.innerText = "⚠️ Enter both username and password";
+        return;
+    }
+
+    msg.style.color = "#94a3b8";
+    msg.innerText = "⏳ Logging in...";
+
     try {
         const res  = await fetch(`${API}/login`, {
             method: "POST",
@@ -122,29 +131,46 @@ async function doLogin() {
             body: JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
+
         if (data.status === "success") {
             localStorage.setItem("cw_loggedIn", "true");
             localStorage.setItem("cw_user", u);
             document.getElementById("loginOverlay").style.display = "none";
-            // show username in sidebar
             const sidebarUser = document.getElementById("sidebarUser");
             const avatar = document.getElementById("userAvatar");
             if (sidebarUser) sidebarUser.innerText = u;
             if (avatar) avatar.innerText = u.charAt(0).toUpperCase();
             initDashboard();
         } else {
-            msg.innerText = "❌ Invalid username or password";
+            msg.style.color = "#ef4444";
+            msg.innerText = "❌ Wrong credentials. If new user, click Register first.";
         }
     } catch {
-        msg.innerText = "⚠️ Backend not running. Start app.py first.";
+        msg.style.color = "#f59e0b";
+        msg.innerText = "⚠️ Server is waking up (free tier). Wait 30 seconds and try again.";
     }
 }
 
 // ========== REGISTER ==========
 async function doRegister() {
-    const u = document.getElementById("loginUser").value.trim();
-    const p = document.getElementById("loginPass").value.trim();
-    if (!u || !p) { document.getElementById("loginMsg").innerText = "⚠️ Enter details"; return; }
+    const u   = document.getElementById("loginUser").value.trim();
+    const p   = document.getElementById("loginPass").value.trim();
+    const msg = document.getElementById("loginMsg");
+
+    if (!u || !p) {
+        msg.style.color = "#f59e0b";
+        msg.innerText = "⚠️ Enter username and password first";
+        return;
+    }
+    if (p.length < 6) {
+        msg.style.color = "#ef4444";
+        msg.innerText = "❌ Password must be at least 6 characters";
+        return;
+    }
+
+    msg.style.color = "#94a3b8";
+    msg.innerText = "⏳ Registering...";
+
     try {
         const res  = await fetch(`${API}/register`, {
             method: "POST",
@@ -152,10 +178,23 @@ async function doRegister() {
             body: JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
-        document.getElementById("loginMsg").innerText =
-            data.status === "registered" ? "✅ Registered! You can now login." : "⚠️ Username already exists.";
+
+        if (data.status === "registered") {
+            msg.style.color = "#10b981";
+            msg.innerText = `✅ Account "${u}" created! Now click Login.`;
+            // highlight login button
+            document.querySelector(".btn-login").style.boxShadow =
+                "0 0 20px rgba(16,185,129,0.5)";
+            setTimeout(() => {
+                document.querySelector(".btn-login").style.boxShadow = "";
+            }, 3000);
+        } else {
+            msg.style.color = "#f59e0b";
+            msg.innerText = `⚠️ Username "${u}" already taken. Try a different one or just login.`;
+        }
     } catch {
-        document.getElementById("loginMsg").innerText = "⚠️ Backend not running.";
+        msg.style.color = "#ef4444";
+        msg.innerText = "⚠️ Server waking up, wait 30 seconds and try again.";
     }
 }
 
@@ -930,4 +969,17 @@ function auditPassword() {
             border-radius:12px;padding:16px;text-align:center;color:#22c55e;font-weight:700;">
             ✅ Excellent password! All security criteria met.
         </div>`}`;
+}
+
+
+function togglePassword() {
+    const pass = document.getElementById("loginPass");
+    const eye  = document.getElementById("eyeIcon");
+    if (pass.type === "password") {
+        pass.type = "text";
+        eye.innerText = "🙈";
+    } else {
+        pass.type = "password";
+        eye.innerText = "👁";
+    }
 }
