@@ -2,7 +2,7 @@ services:
   - type: web
     name: cyberwatch-backend
     runtime: python3
-    buildCommand: pip install -r requirements.txt
+    buildCommand: apt-get install -y nmap && pip install -r requirements.txt
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION

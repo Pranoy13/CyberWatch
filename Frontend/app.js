@@ -14,15 +14,34 @@ window.lastThreatData = [];
 window.lastScrapeData = {};
 
 // ========== INIT ==========
-document.addEventListener("DOMContentLoaded", () => {
-    initMatrix();
-    const overlay = document.getElementById("loginOverlay");
-    if (localStorage.getItem("cw_loggedIn") === "true") {
-        overlay.style.display = "none";
-        initDashboard();
-    } else {
-        overlay.style.display = "flex";
-    }
+document.getElementById("loginPass").addEventListener("input", () => {
+        const p   = document.getElementById("loginPass").value;
+        const bar = document.getElementById("strengthBar");
+        const txt = document.getElementById("pwdStrength");
+
+        let score = 0;
+        if (p.length >= 8)           score++;
+        if (p.length >= 12)          score++;
+        if (/[A-Z]/.test(p))         score++;
+        if (/[0-9]/.test(p))         score++;
+        if (/[!@#$%^&*]/.test(p))    score++;
+
+        const pct    = Math.round((score / 5) * 100);
+        const colors = ["#ef4444","#ef4444","#f59e0b","#f59e0b","#10b981","#8b5cf6"];
+        const labels = ["","Weak ❌","Fair ⚠️","Good 👍","Strong ✅","Excellent 🔥"];
+        const color  = colors[score] || "#ef4444";
+        const label  = labels[score] || "";
+
+        if (bar) {
+            bar.style.width      = pct + "%";
+            bar.style.background = color;
+            bar.style.boxShadow  = `0 0 8px ${color}`;
+        }
+        if (txt) {
+            txt.innerText  = p ? `Password strength: ${label}` : "";
+            txt.style.color = color;
+        }
+    });
 
     // password strength
     document.getElementById("loginPass").addEventListener("input", () => {

@@ -116,18 +116,41 @@ body::before {
 }
 
 /* login box */
+/* login box */
 .login-box {
     background: linear-gradient(135deg,
-        rgba(13,8,32,0.9),
-        rgba(19,10,42,0.9));
+        rgba(13,8,32,0.95),
+        rgba(19,10,42,0.95));
     border: 1px solid var(--border-hi);
     border-radius: 24px;
     padding: 40px;
-    width: 380px;
-    box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.05);
+    width: 400px;
+    box-shadow: var(--glow),
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 0 80px rgba(139,92,246,0.1);
     animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
     position: relative;
     overflow: hidden;
+}
+
+/* animated corner accents */
+.login-box::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        linear-gradient(90deg, var(--purple) 0%, transparent 60%) top left / 40px 1px no-repeat,
+        linear-gradient(180deg, var(--purple) 0%, transparent 60%) top left / 1px 40px no-repeat,
+        linear-gradient(270deg, var(--purple) 0%, transparent 60%) top right / 40px 1px no-repeat,
+        linear-gradient(180deg, var(--purple) 0%, transparent 60%) top right / 1px 40px no-repeat,
+        linear-gradient(90deg, var(--purple) 0%, transparent 60%) bottom left / 40px 1px no-repeat,
+        linear-gradient(0deg, var(--purple) 0%, transparent 60%) bottom left / 1px 40px no-repeat,
+        linear-gradient(270deg, var(--purple) 0%, transparent 60%) bottom right / 40px 1px no-repeat,
+        linear-gradient(0deg, var(--purple) 0%, transparent 60%) bottom right / 1px 40px no-repeat;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.7;
 }
 
 .login-box::before {
@@ -136,7 +159,7 @@ body::before {
     top: -50%; left: -50%;
     width: 200%; height: 200%;
     background: radial-gradient(circle at center,
-        rgba(139,92,246,0.06) 0%, transparent 60%);
+        rgba(139,92,246,0.08) 0%, transparent 60%);
     animation: rotateBg 8s linear infinite;
     pointer-events: none;
 }
@@ -156,6 +179,8 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    position: relative;
+    z-index: 1;
 }
 
 .login-box input {
@@ -175,8 +200,10 @@ body::before {
 
 .login-box input:focus {
     border-color: var(--purple);
-    background: rgba(139,92,246,0.06);
-    box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+    background: rgba(139,92,246,0.08);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15),
+                0 0 20px rgba(139,92,246,0.1);
+    transform: translateY(-1px);
 }
 
 .login-box input::placeholder { color: var(--text-muted); }
@@ -212,10 +239,17 @@ body::before {
     font-size: 12px;
     min-height: 16px;
     margin-bottom: 12px;
-    color: var(--red);
     text-align: center;
     position: relative;
     z-index: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+#loginMsg:not(:empty) {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
 }
 
 .login-btn-row {
@@ -237,12 +271,28 @@ body::before {
     cursor: pointer;
     transition: 0.3s;
     box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+    position: relative;
+    overflow: hidden;
 }
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg,
+        transparent, rgba(255,255,255,0.15), transparent);
+    transition: 0.5s;
+}
+
+.btn-login:hover::before { left: 100%; }
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(139,92,246,0.5);
+    box-shadow: 0 8px 30px rgba(139,92,246,0.5);
 }
+
+.btn-login:active { transform: translateY(0); }
 
 .btn-register {
     flex: 1;
@@ -255,11 +305,14 @@ body::before {
     font-size: 14px;
     cursor: pointer;
     transition: 0.3s;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-register:hover {
     background: var(--purple-dim);
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139,92,246,0.2);
 }
 
 /* audit toggle on login */
@@ -276,11 +329,22 @@ body::before {
     color: var(--text-muted);
     font-size: 12px;
     cursor: pointer;
-    text-decoration: underline;
+    text-decoration: none;
     transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 auto;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid transparent;
 }
 
-.audit-toggle button:hover { color: var(--purple-light); }
+.audit-toggle button:hover {
+    color: var(--purple-light);
+    border-color: var(--border);
+    background: var(--purple-dim);
+}
 
 .login-audit-box {
     display: none;
@@ -293,7 +357,10 @@ body::before {
     z-index: 1;
 }
 
-.login-audit-box.open { display: block; animation: fadeUp 0.3s ease; }
+.login-audit-box.open {
+    display: block;
+    animation: fadeUp 0.3s ease;
+}
 
 /* ========== ANIMATIONS ========== */
 @keyframes fadeDown {
