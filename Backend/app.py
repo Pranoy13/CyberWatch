@@ -1,12 +1,22 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-import re, nmap, requests, threading, sqlite3, hashlib, io
+import re, nmap, requests, threading, sqlite3, hashlib, io, os
 from scapy.all import sniff, IP, TCP, UDP, Raw
 from bs4 import BeautifulSoup
 from fpdf import FPDF
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 
 app = Flask(__name__)
 CORS(app)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["100 per hour"],
+    storage_uri="memory://"
+)
 
 # ================= GLOBALS =================
 packet_store = []
@@ -24,7 +34,8 @@ def init_db():
             password TEXT
         )
     ''')
-    hashed = hashlib.sha256("admin123".encode()).hexdigest()
+    default_pass = os.environ.get("ADMIN_PASSWORD", "CyberWatch@2024")
+    hashed = hashlib.sha256(default_pass.encode()).hexdigest()
     c.execute("INSERT OR IGNORE INTO users(username,password) VALUES (?,?)", ("admin", hashed))
     conn.commit()
     conn.close()
@@ -38,6 +49,7 @@ def home():
 
 # ================= LOGIN =================
 @app.route('/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     try:
         data = request.json
@@ -131,11 +143,30 @@ def analyze():
 
 # ================= NETWORK SCAN =================
 @app.route('/scan', methods=['POST'])
+@limiter.limit("5 per minute")
 def scan():
     try:
         ip = request.json.get('ip', '').strip()
         if not ip:
             return jsonify({"error": "No IP provided"})
+
+        # Security: only allow private/local IPs on live deployment
+        import ipaddress
+        try:
+            parsed = ipaddress.ip_address(ip)
+            allowed = (
+                parsed.is_private or
+                parsed.is_loopback or
+                str(parsed).startswith("10.") or
+                str(parsed).startswith("172.") or
+                str(parsed).startswith("192.168.")
+            )
+            if not allowed:
+                return jsonify({
+                    "error": "For security reasons, only private/local IP scanning is allowed on the live demo. Run locally to scan public IPs."
+                })
+        except ValueError:
+            return jsonify({"error": "Invalid IP address format"})
         nm = nmap.PortScanner()
         nm.scan(hosts=ip, arguments='-T4 -Pn -F')
         if ip not in nm.all_hosts():
@@ -250,6 +281,7 @@ def get_alerts():
 
 # ================= WEB SCRAPER =================
 @app.route('/scrape', methods=['POST'])
+@limiter.limit("10 per minute")
 def scrape():
     try:
         url = request.json.get('url', '').strip()
